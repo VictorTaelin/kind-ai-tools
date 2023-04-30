@@ -1,0 +1,19 @@
+{
+  "name": "kindai",
+  "version": "1.0.0",
+  "description": "A simple Node.js CLI that receives an input and outputs the same string in uppercase",
+  "type": "module",
+  "main": "main.js",
+  "bin": {
+    "kindai": "main.js"
+  },
+  "scripts": {
+    "start": "node main.js"
+  },
+  "keywords": [
+    "cli",
+    "uppercase"
+  ],
+  "author": "",
+  "license": "MIT"
+}
