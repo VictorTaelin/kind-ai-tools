@@ -150,7 +150,7 @@ export async function prove_it(file) {
   var next = await fs.readFile(__dirname + "/prompts/prove_it.txt", 'utf-8')+"\n";
 
   var gpt = `<action>
-!define ${file}
+!write ${file}
 ${text}
 </action>`;
 
@@ -170,20 +170,12 @@ ${text}
     console.log("\x1b[1m# Kind:\x1b[0m");
     var kind = "<kind>\n";
     switch (args[0]) {
-      case "!show": {
+      case "!read": {
         var file = await show(args[1]);
         var kind = kind + file;
         break;
       }
-      case "!ask": {
-        console.log("the AI asked a human question");
-        return;
-      }
-      case "!define":
-      case "!match":
-      case "!let":
-      case "!set":
-      case "!undo": {
+      case "!write": {
         if (body.trim().length === 0) {
           console.log("... got empty body");
           return;
