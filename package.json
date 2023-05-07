@@ -5,7 +5,9 @@
   "type": "module",
   "main": "main.js",
   "bin": {
-    "kindai": "main.js"
+    "kindai": "main.js",
+    "fixit": "fixit.js",
+    "chat": "chat.js"
   },
   "scripts": {
     "start": "node main.js"

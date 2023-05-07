@@ -1,0 +1,186 @@
+You're a helpful assistant. You complete tasks. Available commands:
+
+// shows a file contents
+{cmd: "cat", file: "..."}
+
+// shows a directory contents
+{cmd: "ls", args: "..."}
+
+// writes a file
+{cmd: "write", body: "...contents..."}
+
+// uses the 'ag' silver searcher
+{cmd: "ag", args: "..."}
+
+
+
+
+
+- [!read F] reads file or path 'F'.
+
+- [!write F code] writes file 'F', and type-checks it.
+
+Kind-Lang is similar to Agda, except:
+- global function names start with uppercase
+- holes are written with '?name'
+- it isn't curried, so you might need to write `(x => F x)` instead of `F`
+- the definition of `Foo.Bar` is either on `Foo/Bar.kind2` or `Foo/Bar/_.kind2'
+
+<action>
+!write Main.kind2
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main n = ?a
+</action>
+
+<kind>
+inspection
+- Hole: (Equal Nat (Nat.id n) n)
+context
+- n : Nat
+location
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main n = {{?a}}
+</kind>
+
+<action>
+!read Nat/id.kind2
+</action>
+
+<kind>
+Nat.id (n: Nat) : Nat
+Nat.id Nat.zero     = Nat.zero
+Nat.id (Nat.succ p) = Nat.succ (Nat.id p)
+</kind>
+
+<action>
+!write Main.kind2
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main Nat.zero = ?a
+Main (Nat.succ n_pred) = ?b
+</action>
+
+<kind>
+inspection
+- Hole: (Equal Nat 0n 0n)
+location
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main Nat.zero          = {{?a}}
+Main (Nat.succ n_pred) = ?b
+inspection
+- Hole: (Equal Nat (Nat.succ (Nat.id n_pred)) (Nat.succ n_pred))
+context
+- n_pred : Nat
+location
+Main Nat.zero          = ?a
+Main (Nat.succ n_pred) = {{?b}}
+</kind>
+
+<action>
+!write Main.kind2
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main Nat.zero = Equal.refl
+Main (Nat.succ n_pred) = ?b
+</action>
+
+<kind>
+inspection
+- Hole: (Equal Nat (Nat.succ (Nat.id n_pred)) (Nat.succ n_pred))
+context
+- n_pred : Nat
+location
+Main Nat.zero          = Equal.refl
+Main (Nat.succ n_pred) = {{?b}}
+</kind>
+
+<action>
+!write Main.kind2
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main Nat.zero = Equal.refl
+Main (Nat.succ n_pred) =
+  let ind = Main n_pred
+  ?b
+</action>
+
+<kind>
+inspection
+- Hole: (Equal Nat (Nat.succ (Nat.id n_pred)) (Nat.succ n_pred))
+context
+- n_pred : Nat
+- ind : (Equal Nat (Nat.id n_pred) n_pred)
+location
+  let ind = Main n_pred
+  {{?b}}
+</kind>
+
+<action>
+!read Equal
+</action>
+
+<kind>
+_.kind2
+apply.kind2
+chain.kind2
+mirror.kind2
+rewrite.kind2
+</kind>
+
+<action>
+!read Equal/apply.kind2
+</action>
+
+<kind>
+// Applies a function to both sides of an equality.
+Equal.apply <t> <u> <a: t> <b: t> (f: t -> u) (e: Equal t a b) : Equal u (f a) (f b)
+Equal.apply t u a b f (Equal.refl tt x) = Equal.refl u (f x)
+</kind>
+
+<action>
+!write main.kind2
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main Nat.zero = Equal.refl
+Main (Nat.succ n_pred) =
+  let ind = Main n_pred
+  let con = Equal.apply (x => Nat.succ x) ind
+  ?b
+</action>
+
+<kind>
+inspection
+- Hole: (Equal Nat (Nat.succ (Nat.id n_pred)) (Nat.succ n_pred))
+context
+- n_pred : Nat
+- ind : (Equal Nat (Nat.id n_pred) n_pred)
+- con : (Equal Nat (Nat.succ (Nat.id n_pred)) (Nat.succ n_pred))
+location
+  let con = Equal.apply (x => Nat.succ x) ind
+  {{?b}}
+</kind>
+
+<action>
+!write main.kind2
+Main (n : Nat) : Equal Nat (Nat.id n) n
+Main Nat.zero = Equal.refl
+Main (Nat.succ n_pred) =
+  let ind = Main n_pred
+  let con = Equal.apply (x => Nat.succ x) ind
+  con
+</action>
+
+<kind>
+checked
+</kind>
+
+Another example:
+
+<action>
+!write 
+
+Now, let's prove a real theorem!
+
+Hints: The let command just creates a new local variable. Kind can only show up
+to 10 characters for variable names in context. Learn how functions work by
+showing their source codes. Use proof techniques such as case analysis,
+induction, and equality theorems available on /Equal. These examples made very
+small steps, but you can make bigger steps if you think you don't need to see
+intermediate contexts and goals. Learn with your mistakes. Some proofs may
+require creating auxiliary functions. Do it by writing new files. Good luck!

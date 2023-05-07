@@ -8,10 +8,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function load_local(relativePath) {
+export const __kindex = '/Users/v/vic/dev/kindex/';
+
+export async function load_local(relativePath) {
   try {
     const filePath = path.join(__dirname, relativePath);
-    const fileContent = await readFile(filePath, 'utf-8');
+    const fileContent = await fs.readFile(filePath, 'utf-8');
     return fileContent;
   } catch (error) {
     console.error(`Error reading ${relativePath}:`, error);
@@ -21,7 +23,7 @@ async function load_local(relativePath) {
 const execAsync = promisify(exec);
 
 export async function show(inputPath) {
-  const basePath = '/Users/v/vic/dev/wikind2/';
+  const basePath = __kindex;
   const safeInputPath = path.normalize(inputPath).replace(/^(\.\.[\/\\])+/, '');
   const fullPath = path.join(basePath, safeInputPath);
 
@@ -46,7 +48,7 @@ export async function show(inputPath) {
 }
 
 export async function write(inputPath, content) {
-  const basePath = '/Users/v/vic/dev/wikind2/';
+  const basePath = __kindex;
   const safeInputPath = path.normalize(inputPath).replace(/^(\.\.[\/\\])+/, '');
   const fullPath = path.join(basePath, safeInputPath);
   if (!fullPath.startsWith(basePath)) {
@@ -71,13 +73,13 @@ export async function write(inputPath, content) {
   }
 }
 
-export async function check(inputPath) {
-  const basePath = '/Users/v/vic/dev/wikind2/';
+export async function check(inputPath, opts = {}) {
+  const basePath = __kindex;
   const safeInputPath = path.normalize(inputPath).replace(/^(\.\.[\/\\])+/, '');
   const fullPath = path.join(basePath, safeInputPath);
 
   try {
-    const { stdout, stderr } = await execAsync(`kind2 --hide-vals --compact check "${fullPath}"`, { cwd: basePath });
+    const { stdout, stderr } = await execAsync(`kind2 ${opts.compact ? "--hide-vals --compact" : ""} check "${fullPath}"`, { cwd: basePath });
     if (stderr) {
       return `${stderr}`;
     }
@@ -97,7 +99,7 @@ export async function GPT(message, opts={}) {
     apiKey: JSON.parse(await fs.readFile(new URL('./TOKEN.json', import.meta.url))),
     debug: opts.debug,
     completionParams: {
-      model: "gpt-4",
+      model: opts.model || "gpt-4",
       stream: true,
       temperature: opts.temperature || 0,
       max_tokens: opts.tokens || 512,
@@ -225,4 +227,23 @@ your reasoning here
     var gpt = await GPT(msge, {tokens: 512});
 
   } while (true);
+}
+
+// Given a list of Kind definition names, returns their codes
+export async function load_kind_defs(definitionNames) {
+  const sourceCodes = [];
+
+  for (const name of definitionNames) {
+    const path1 = __kindex + name.replace(/\./g, '/') + '.kind2';
+    const path2 = __kindex + name.replace(/\./g, '/') + '/_.kind2';
+    try {
+      sourceCodes.push(await fs.readFile(path1, 'utf-8'));
+    } catch (err1) {
+      try {
+        sourceCodes.push(await fs.readFile(path2, 'utf-8'));
+      } catch (err2) {}
+    }
+  }
+
+  return sourceCodes;
 }

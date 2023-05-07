@@ -1,0 +1,93 @@
+Shorten the error and context message below in order to use less tokens, under
+Byte Pair Encoding (BPE), while still keeping the same information. If it is a
+type mismatch, write "type error", the detected and expected types, the context
+and the code, surrounding the error part with '{{value}}'. If it is an
+inspection, show only the holes, their types and contexts. If it is another
+error, shorten it in a similar fashion. When showing contexts, include only
+types, not values. Do not attempt to align ":" (i.e., remove unecessary spaces).
+When there is no error, just write 'checked'. Examples:
+
+Long:
+
+   CHECKING  The file 'Main.kind2'
+   ERROR  Type mismatch
+
+      • Got      : Bool
+      • Expected : (Equal Nat (Nat.half (Nat.double n)) n)
+
+      • Context:
+      •   n : Nat
+      •   n = n
+
+      ┌──[Main.kind2:2:10]
+      │
+    1 │    Main (n : Nat) : Equal Nat (Nat.half (Nat.double n)) n
+    2 │    Main n = Bool.true
+      │             ┬────────
+      │             └Here!
+    3 │
+
+
+     FAILED  Took 0s
+
+Short:
+
+type error
+- expected : (Equal Nat (Nat.half (Nat.double n)) n)
+- observed : Bool
+context
+- n : Nat
+location
+Main (n : Nat) : Equal Nat (Nat.half (Nat.double n)) n
+Main n = {{Bool.true}}
+
+Long:
+
+   CHECKING  The file 'Main.kind2'
+   INFO  Inspection.
+
+      • Expected: (Equal Nat 0n 0n)
+
+
+      ┌──[Main.kind2:2:21]
+      │
+    1 │    Main (n : Nat) : Equal Nat (Nat.half (Nat.double n)) n
+    2 │    Main Nat.zero     = ?a
+      │                        ┬─
+      │                        └Here!
+    3 │    Main (Nat.succ p) = ?b
+
+
+   INFO  Inspection.
+
+      • Expected: (Equal Nat (Nat.succ (Nat.half (Nat.double p))) (Nat.succ p))
+
+      • Context:
+      •   p : Nat
+      •   p = p
+
+      ┌──[Main.kind2:3:21]
+      │
+    2 │    Main Nat.zero     = ?a
+    3 │    Main (Nat.succ p) = ?b
+      │                        ┬─
+      │                        └Here!
+    4 │
+
+
+     FAILED  Took 0s
+
+Short:
+
+hole
+- ?a : (Equal Nat 0n 0n)
+context
+- empty
+hole
+- ?b : (Equal Nat (Nat.succ (Nat.half (Nat.double p))) (Nat.succ p))
+context
+- p : Nat
+
+Shorten the following message:
+
+{{message}}
