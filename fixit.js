@@ -4,10 +4,13 @@ import { ChatGPTAPI } from 'chatgpt'
 import fs from 'fs/promises';
 import * as lib from './lib.js';
 
+var kind  = await lib.load_local("./prompts/kind_examples.txt");
 var file  = process.argv[2];
 var fast  = process.argv[3] === "--fast";
 var code  = (await fs.readFile(file, 'utf-8')).trim();
-var error = (await lib.check(file,{compact:false})).trim();
+var error = (await lib.check(file,{compact:true})).trim();
+
+var fast = false;
 
 console.log("Fixing " + file + " with " + (fast ? "GPT-3.5" : "GPT-4") + "...");
 
@@ -18,7 +21,11 @@ try {
   var note = "";
 }
 
-var fixit = (await lib.load_local("./prompts/fixit.txt")).replace("{{note}}",note).replace("{{code}}",code).replace("{{error}}",error);
+var fixit = (await lib.load_local("./prompts/fixit.txt"))
+  .replace("{{kind_examples}}",kind)
+  .replace("{{note}}",note)
+  .replace("{{code}}",code)
+  .replace("{{error}}",error);
 
 // Asks needed definitions
 // -----------------------
