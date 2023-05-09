@@ -63,13 +63,11 @@ Below are relevant dependencies:
 ${defs}
 </deps>
 
-Your goal is to fix that code, and remove all double spaces. Write the fixed
-version below, inside 'correct_code' tags. For ex
+Your goal is to fix that code. Write the fixed version below, inside
+'correct_code' tags. Example:
 
 <correct_code>
-example Z Z = a
-example (S x) (S y) = b
-... rest of the code with errors fixed and double spaces removed ...
+... fixed code here ...
 </correct_code>
 
 Do it now. Fixed code:`;
