@@ -4,6 +4,7 @@ import { ChatGPTAPI } from 'chatgpt'
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,22 +74,30 @@ export async function write(inputPath, content) {
   }
 }
 
+export async function get_deps(inputPath, opts = {}) {
+  const basePath = __kindex;
+  const safeInputPath = path.normalize(inputPath).replace(/^(\.\.[\/\\])+/, '');
+  const fullPath = path.join(basePath, safeInputPath);
+
+  try {
+    var { stdout, stderr } = await execAsync(`kind2 --get-deps check "${fullPath}"`, { cwd: basePath });
+    var deps = stdout;
+  } catch (err) {
+    var deps = err.stdout;
+  }
+  return deps.split("\n").filter(x => x !== "");
+}
+
 export async function check(inputPath, opts = {}) {
   const basePath = __kindex;
   const safeInputPath = path.normalize(inputPath).replace(/^(\.\.[\/\\])+/, '');
   const fullPath = path.join(basePath, safeInputPath);
 
   try {
-    const { stdout, stderr } = await execAsync(`kind2 ${opts.compact ? "--hide-vals --compact" : ""} check "${fullPath}"`, { cwd: basePath });
-    if (stderr) {
-      return `${stderr}`;
-    }
-    return stdout;
+    var { stdout, stderr } = await execAsync(`kind2 --hide-deps ${opts.compact ? "--hide-vals --compact" : ""} check "${fullPath}"`, { cwd: basePath });
+    return stderr || stdout;
   } catch (err) {
-    if (err.stderr) {
-      return `${err.stderr}`;
-    }
-    return `${err.message}`;
+    return err.stderr || err.message;
   }
 }
 
@@ -96,7 +105,7 @@ const SYSTEM = "You're an intelligent agent.";
 
 export async function GPT(message, opts={}) {
   const api = new ChatGPTAPI({
-    apiKey: JSON.parse(await fs.readFile(new URL('./TOKEN.json', import.meta.url))),
+    apiKey: await get_token(),
     debug: opts.debug,
     completionParams: {
       model: opts.model || "gpt-4",
@@ -246,4 +255,20 @@ export async function load_kind_defs(definitionNames) {
   }
 
   return sourceCodes;
+}
+
+export async function get_token() {
+  const tokenPath = path.join(os.homedir(), '.config', 'openai.token');
+  try {
+    const token = (await fs.readFile(tokenPath, 'utf8')).trim();
+    return token;
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.error('Error: openai.token file not found in ~/.config/');
+      console.error('Please make sure the file exists and contains your OpenAI API token.');
+    } else {
+      console.error('Error reading openai.token file:', err.message);
+    }
+    process.exit(1);
+  }
 }

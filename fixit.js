@@ -4,68 +4,75 @@ import { ChatGPTAPI } from 'chatgpt'
 import fs from 'fs/promises';
 import * as lib from './lib.js';
 
-var kind  = await lib.load_local("./prompts/kind_examples.txt");
+var kind  = await lib.load_local("./kind_examples.txt");
 var file  = process.argv[2];
-var fast  = process.argv[3] === "--fast";
+var model = process.argv[3] === "4" ? "gpt-4" : "gpt-3.5-turbo";
 var code  = (await fs.readFile(file, 'utf-8')).trim();
-var error = (await lib.check(file,{compact:true})).trim();
+var deps  = (await lib.get_deps(file));
+var error = (await lib.check(file,{compact:false})).trim();
 
 var fast = false;
 
-console.log("Fixing " + file + " with " + (fast ? "GPT-3.5" : "GPT-4") + "...");
+console.log("Fixing " + file + " with " + model + ".");
 
 try {
-  var note = (await fs.readFile("fixit", "utf-8"));
-  console.log("- Note: " + note.trim());
+  var notes = (await fs.readFile("fixit", "utf-8")).trim()+"\n";
+  console.log("- Notes: " + notes);
 } catch (e) {
-  var note = "";
+  var notes = "";
 }
 
-var fixit = (await lib.load_local("./prompts/fixit.txt"))
+// Gets relevant devs
+var defs = (await lib.load_kind_defs(deps)).map(x => x.trim()).join("\n");
+
+var fixit = `Kind is a programming language similar to Agda.
+
+Examples:
+
+<kind_examples>
+{{kind_examples}}
+</kind_examples>
+
+Notes:
+
+<notes>
+global definitions start with an uppercase letter, like 'Equal.apply' and 'Nat.add'
+global definitions aren't curried, so they need lambdas: 'List.map (x => Nat.succ x)'
+local definitions start with a lowercase letter, and are curried: 'List.map nat_succ'
+holes are written as '?hole_name'
+{{notes}}</notes>
+
+Below is the incorrect Kind program that you must fix:
+
+<wrong_code>
+{{code}}
+</wrong_code>
+
+Below is the error message:
+
+<error>
+{{error}}
+</error>
+
+Below are relevant dependencies:
+
+<deps>
+${defs}
+</deps>
+
+Your task is to fix that code. Write the fixed version below. Fixed code:
+
+<correct_code>`;
+
+var fixit = fixit
   .replace("{{kind_examples}}",kind)
-  .replace("{{note}}",note)
+  .replace("{{notes}}",notes)
   .replace("{{code}}",code)
   .replace("{{error}}",error);
 
-// Asks needed definitions
-// -----------------------
-
-var prom = fixit + `
-Your job is to fix this error. To do so, more information may be necessary.
-Write below a JSON with the name of ALL the global definitions that could be
-relevant to fix the error above. For example, if the error involves missing
-cases, include the relevant type, in order to find its constructors. If it is a
-type mismatch, write the name of the relevant functions. And so on.
-
-JSON:`;
-
-try {
-  var load = await lib.GPT(prom, "gpt-3.5-turbo");
-  for (var def of JSON.parse(load)) {
-    console.log("- Reading " + def + "...");
-  }
-  var defs = await lib.load_kind_defs(JSON.parse(load));
-  var defs = defs.map(x => x.trim()).join("\n");
-  //console.log(defs);
-} catch (e) {
-  var defs = "";
-}
-
-
-// Asks the fixed code
-// -------------------
-
-var prom = fixit + `
-Below are some definitions that could be relevant:
-
-${defs}
-
-Your task is to fix the code. Write the fixed version below. Fixed code:
-
-// Main.kind`;
-
-var fixed = await lib.GPT(prom, {model: fast ? "gpt-3.5-turbo" : "gpt-4"});
-console.log("- Fixed.\n\n");
+var fixed = await lib.GPT(fixit, {model});
+var fixed = fixed.replace("</correct_code>", "").trim();
+console.log("- Fixed:\n\n");
 console.log(fixed);
 
 await fs.writeFile(file, fixed);

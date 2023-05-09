@@ -1,0 +1,80 @@
+type Bool {
+  true
+  false
+}
+
+type List (t) {
+  nil
+  cons (head: t) (tail: List t)
+}
+
+record Sigma (a: Type) (f: a -> Type) {
+  fst : a
+  snd : f fst
+}
+
+type Vector <a: Type> ~ (len: Nat) {
+  nil : Vector a Nat.zero
+  cons (len: Nat) (head: a) (tail: Vector a len) : Vector a (Nat.succ len)
+}
+
+Bool.not (b: Bool) : Bool
+Bool.not Bool.true  = Bool.false
+Bool.not Bool.false = Bool.true
+
+List.head <a> (xs: List a) : Maybe (List a)
+List.head List.nil              = Maybe.none
+List.head (List.cons head tail) = Maybe.some head
+
+// Or, using match:
+List.head <a> (xs: List a) : Maybe (List a) {
+  match List xs {
+    nil => Maybe.none
+    cons => Maybe.some xs.head
+  }
+}
+
+List.fold <a> <p> (xs: List a) : p -> (a -> p -> p) -> p
+List.fold List.nil              = nil => cons => nil
+List.fold (List.cons head tail) = nil => cons => cons head ((List.fold tail) nil cons)
+
+Sigma.snd <a> <b: a -> Type> (s: Sigma a b) : b (Sigma.fst a b s)
+Sigma.snd (Sigma.new x y) = y
+
+Vector.create <a> (len: Nat) (f: Nat -> a) : Vector a len
+Vector.create Nat.zero     f = Vector.nil
+Vector.create (Nat.succ p) f =
+  let head = f Nat.zero
+  let tail = Vector.create p (x => f (Nat.succ x))
+  Vector.cons p head tail
+
+Main : IO Unit {
+  do IO {
+    ask name = IO.prompt "your name?"
+    IO.print (String.join "" ["Hi " name])
+  }
+}
+
+// Proof: a == a + 0
+Nat.add.right_zero (a: Nat) : Equal Nat a (Nat.add a Nat.zero)
+// goal: 0 == 0
+Nat.add.right_zero Nat.zero =
+  // 0 == 0
+  let ret = Equal.refl
+  ret
+// goal: S a == S (a + 0)
+Nat.add.right_zero (Nat.succ a) =
+  // a == a + 0
+  let ind = Nat.add.right_zero a
+  // S a == S (a + 0)
+  let app = Equal.apply (x => Nat.succ x) ind
+  app
+
+// Proof: (S a) != 0
+Nat.succ_not_zero (a: Nat) (e: Equal Nat (Nat.succ a) Nat.zero) : Empty
+Nat.succ_not_zero a e =
+  // false == true
+  let app = Equal.apply (x => Nat.is_zero x) e
+  // empty
+  let emp = Bool.false_not_true app
+  emp

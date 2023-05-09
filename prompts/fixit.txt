@@ -10,15 +10,16 @@ the global definitions used on 'List.head':
 
 ["List.head", "List", "Maybe", "List.nil", "List.cons", "Maybe.none", "Maybe.some"]
 
-Notes:
+<notes>
 global functions aren't curried. passing them needs lambdas: '(x => Nat.succ x)'
 holes are written as '?hole_name'
-{{note}}
+{{note}}</notes>
 
-Below is an incorrect Kind program:
+Below is the incorrect Kind program that you must fix:
 
-// Main.kind
+<wrong_code>
 {{code}}
+</wrong_code>
 
 Below is the error message. The problematic location is surrounded with {{}}:
 
