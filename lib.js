@@ -106,12 +106,12 @@ const SYSTEM = "You're an intelligent agent.";
 export async function GPT(message, opts={}) {
   const api = new ChatGPTAPI({
     apiKey: await get_token(),
-    debug: opts.debug,
+    //debug: opts.debug,
     completionParams: {
       model: opts.model || "gpt-4",
       stream: true,
       temperature: opts.temperature || 0,
-      max_tokens: opts.tokens || 512,
+      max_tokens: opts.tokens || 1024,
     },
   });
 
@@ -139,15 +139,17 @@ export async function shorten_error(message, opts={}) {
   return await GPT(full_prompt, opts);
 }
 
-export async function prove_it(file) {
-  function extract(tag, str) {
-    if (str.indexOf("<"+tag+">") !== -1) {
-      return str.slice(str.indexOf("<"+tag+">")+2+tag.length, str.indexOf("</"+tag+">")).trim();
-    } else {
-      return "...";
-    }
+export function extract(tag, str) {
+  const regex = new RegExp(`<${tag}>\\s*([\\s\\S]*?)\\s*<\/${tag}>`, 'g');
+  let match;
+  let results = [];
+  while ((match = regex.exec(str)) !== null) {
+    results.push(match[1].trim());
   }
+  return results.join(" ");
+}
 
+export async function prove_it(file) {
   if (!file) {
     var file = "Main.kind2";
     var text = [
