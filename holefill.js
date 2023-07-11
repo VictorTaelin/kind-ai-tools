@@ -4,27 +4,23 @@ import { ChatGPTAPI } from 'chatgpt'
 import fs from 'fs/promises';
 import * as lib from './lib.js';
 
-var system = `You are a hole-filling agent. You are provided with a file containing holes, denoted as '?name'. Your task is to respond with the correct string to replace these holes with. Pay attention to avoid off-by-one indentation errors. Omit valid JSON to be consumed by JSON.parse.
+var system = `You are a code completer. You are provided with a file containing holes, denoted as '?name'. Your task is to fill a specific hole, including proper identation, based on context.
 
-Example query:
+## Example query:
 
-// prints the square of all even numbers from 0 to 10
-function ?fn(x) {
-  for (var i = 0; i < ?lim; ++i) {
+function print_even_squares_up_to(lim) {
+  for (var i = 0; i < lim; ++i) {
     ?loop
   }
 }
 
-Example response:
+>> Fill the ?loop hole.
 
-{
-  "fn": "printEvenSquares",
-  "loop": "11",
-  "lim": "if (i % 2 === 0) {\\n      console.log(x * x);\\n    }"
-}
+## Example response:
 
-Notice how, on "lim", the console.log line has 6 spaces, based on context.
-`;
+    if (i % 2 === 0) {
+      console.log(x * x);
+    }`;
 
 var file = process.argv[2];
 var fill = process.argv[3];
@@ -44,19 +40,20 @@ var fill_code = fill ? await fs.readFile(fill, 'utf-8') : file_code;
 var fill_tokens = lib.token_count(fill_code);
 var tokens = (8192 - fill_tokens - lib.token_count(system) - 256);
 var holes = fill_code.match(/\?\w+/g) || [];
-var query = fill_code;
-
 console.log("holes_found:", holes);
 console.log("token_count:", fill_tokens);
+
 if (tokens <= 0) {
   console.log("Please shorten the file.");
   process.exit();
 }
 
-var subst = JSON.parse(await lib.GPT(query, {model, temperature, system, tokens, debug: true }));
-for (var key in subst) {
-  file_code = file_code.replace(new RegExp(`\\?${key}(?![a-zA-Z0-9])`, 'g'), subst[key]);
+for (let hole of holes) {
+  console.log("Filling " + hole + "...");
+  var query = fill_code + "\n\n>> Fill the "+hole+" hole.";
+  var subst = await lib.GPT(query, {model, temperature, system, tokens, debug: true });
+  file_code = file_code.replace(new RegExp('(?:\\?)'+hole.slice(1)+'(?!\\w)', 'g'), subst.trim());
+  console.log("Done.");
 }
 
 await fs.writeFile(file, file_code, 'utf-8');
-console.log('File is updated successfully.');
