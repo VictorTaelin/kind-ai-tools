@@ -49,11 +49,10 @@ if (tokens <= 0) {
 }
 
 for (let hole of holes) {
-  console.log("Filling " + hole + "...");
+  console.log("next_filled: " + hole + "...");
   var query = fill_code + "\n\n>> Fill the "+hole+" hole.";
   var subst = await lib.GPT(query, {model, temperature, system, tokens, debug: true });
   file_code = file_code.replace(new RegExp('(?:\\?)'+hole.slice(1)+'(?!\\w)', 'g'), subst.trim());
-  console.log("Done.");
 }
 
 await fs.writeFile(file, file_code, 'utf-8');
