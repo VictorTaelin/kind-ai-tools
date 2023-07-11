@@ -1,10 +1,11 @@
 {
   "name": "kind-ai-tools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple Node.js CLI that receives an input and outputs the same string in uppercase",
   "type": "module",
   "main": "main.js",
   "bin": {
+    "holefill": "holefill.js",
     "fixit": "fixit.js",
     "chatgpt": "chatgpt.js"
   },
