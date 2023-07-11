@@ -4,8 +4,6 @@ import { ChatGPTAPI } from 'chatgpt'
 import fs from 'fs/promises';
 import * as lib from './lib.js';
 
-console.log("ue");
-
 var file = process.argv[2];
 var fill = process.argv[3];
 var model = "gpt-4-0314";
