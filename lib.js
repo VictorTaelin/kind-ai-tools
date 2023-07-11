@@ -1,10 +1,11 @@
 import fs from 'fs/promises';
+import os from 'os';
 import path from 'path';
 import { ChatGPTAPI } from 'chatgpt'
+import { encode } from 'gpt-tokenizer/esm/model/davinci-codex'; // Import tokenizer
 import { exec } from 'child_process';
-import { promisify } from 'util';
 import { fileURLToPath } from 'url';
-import os from 'os';
+import { promisify } from 'util';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,12 +107,13 @@ const SYSTEM = "You're an intelligent agent.";
 export async function GPT(message, opts={}) {
   const api = new ChatGPTAPI({
     apiKey: await get_token(),
+    maxModelTokens: 8096,
     //debug: opts.debug,
     completionParams: {
       model: opts.model || "gpt-4",
       stream: true,
       temperature: opts.temperature || 0,
-      max_tokens: opts.tokens || 1024,
+      max_tokens: opts.tokens,
     },
   });
 
@@ -273,4 +275,15 @@ export async function get_token() {
     }
     process.exit(1);
   }
+}
+
+export function token_count(inputText) {
+    // Encode the input string into tokens
+    const tokens = encode(inputText);
+
+    // Get the number of tokens
+    const numberOfTokens = tokens.length;
+
+    // Return the number of tokens
+    return numberOfTokens;
 }

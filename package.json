@@ -1,6 +1,6 @@
 {
   "name": "kind-ai-tools",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple Node.js CLI that receives an input and outputs the same string in uppercase",
   "type": "module",
   "main": "main.js",
@@ -17,5 +17,9 @@
     "uppercase"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "chatgpt": "^5.2.5",
+    "gpt-tokenizer": "^2.1.1"
+  }
 }
